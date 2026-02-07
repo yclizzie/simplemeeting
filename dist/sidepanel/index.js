@@ -165,6 +165,7 @@
           language: 'en',
           punctuate: 'true',
           smart_format: 'true',
+          diarize: 'true',
         });
         const url = `https://api.deepgram.com/v1/listen?${params}`;
         const res = await fetch(url, {
@@ -183,7 +184,34 @@
         const channel = data.results?.channels?.[0];
         const alternatives = channel?.alternatives;
         if (!alternatives?.length) return '';
-        return alternatives[0].transcript ?? '';
+
+        const words = alternatives[0].words || [];
+        if (!words.length) return alternatives[0].transcript ?? '';
+
+        // Build speaker-attributed transcript from word-level speaker IDs
+        this.speakerMap = {};
+        let lines = [];
+        let currentSpeaker = null;
+        let currentWords = [];
+
+        for (const w of words) {
+          const speaker = w.speaker ?? 0;
+          if (speaker !== currentSpeaker) {
+            if (currentWords.length) {
+              const label = this.getSpeakerLabel(currentSpeaker);
+              lines.push(`${label}: ${currentWords.join(' ')}`);
+            }
+            currentSpeaker = speaker;
+            currentWords = [];
+          }
+          currentWords.push(w.punctuated_word || w.word);
+        }
+        if (currentWords.length) {
+          const label = this.getSpeakerLabel(currentSpeaker);
+          lines.push(`${label}: ${currentWords.join(' ')}`);
+        }
+
+        return lines.join('\n');
       }
 
       /**
