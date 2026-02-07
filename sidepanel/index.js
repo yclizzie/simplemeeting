@@ -1,9 +1,12 @@
 // Side panel JavaScript
+import DeepgramService from '../utils/deepgram.js';
+
 let mediaRecorder = null;
 let audioChunks = [];
 let recordedBlob = null;
 let startTime = null;
 let timerInterval = null;
+let micStream = null;
 
 // UI Elements
 const startBtn = document.getElementById('startBtn');
@@ -12,13 +15,17 @@ const playBtn = document.getElementById('playBtn');
 const statusText = document.getElementById('statusText');
 const statusDiv = document.querySelector('.status');
 const recordingTime = document.getElementById('recordingTime');
+const transcriptEl = document.getElementById('transcript');
 
 // Event Listeners
 startBtn.addEventListener('click', startRecording);
 stopBtn.addEventListener('click', stopRecording);
 playBtn.addEventListener('click', playRecording);
 
+
 async function startRecording() {
+  // New session: clear transcript
+  transcriptEl.textContent = '';
   try {
     // Get the current tab
     //const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -82,7 +89,7 @@ async function startRecording() {
       }
     };
 
-    mediaRecorder.onstop = () => {
+    mediaRecorder.onstop = async () => {
       recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
       playBtn.disabled = false;
       
@@ -92,6 +99,19 @@ async function startRecording() {
       
       // Close audio context
       audioContext.close();
+
+      // Send to Deepgram and show transcript
+      statusText.textContent = 'Transcribing...';
+      try {
+        const deepgram = new DeepgramService("dd12a356303aa4b6012ba8769cbc0bd85eb90af5");
+        const text = await deepgram.transcribeRecording(recordedBlob);
+        transcriptEl.textContent = text || '(No speech detected)';
+        statusText.textContent = 'Recording stopped';
+      } catch (err) {
+        console.error('Transcription error:', err);
+        transcriptEl.textContent = `Error: ${err.message}`;
+        statusText.textContent = 'Transcription failed';
+      }
     };
 
     mediaRecorder.start();

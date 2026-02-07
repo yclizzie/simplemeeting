@@ -128,3 +128,49 @@ h1 {
   color: #333;
   font-variant-numeric: tabular-nums;
 }
+
+.transcript-section {
+  margin-top: 20px;
+}
+
+.transcript-section label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.transcript-section #apiKey {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.transcript-section #apiKey:focus {
+  outline: none;
+  border-color: #2196F3;
+}
+
+#transcript {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  min-height: 80px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#transcript:empty::before {
+  content: 'Transcript will appear here after you stop recording.';
+  color: #999;
+}

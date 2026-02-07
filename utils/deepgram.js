@@ -153,6 +153,37 @@ export default class DeepgramService {
     }
     
     /**
+     * Transcribe a pre-recorded audio blob (e.g. after recording stops).
+     * Uses Deepgram REST API. Returns full transcript text or throws.
+     */
+    async transcribeRecording(audioBlob) {
+      const params = new URLSearchParams({
+        model: 'nova-2',
+        language: 'en',
+        punctuate: 'true',
+        smart_format: 'true',
+      });
+      const url = `https://api.deepgram.com/v1/listen?${params}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Token ${this.apiKey}`,
+          'Content-Type': audioBlob.type || 'audio/webm',
+        },
+        body: audioBlob,
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Deepgram: ${res.status} ${err}`);
+      }
+      const data = await res.json();
+      const channel = data.results?.channels?.[0];
+      const alternatives = channel?.alternatives;
+      if (!alternatives?.length) return '';
+      return alternatives[0].transcript ?? '';
+    }
+
+    /**
      * Close connection
      */
     close() {
